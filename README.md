@@ -70,36 +70,32 @@ flowchart LR
     CTRL -- "amr/camera_view" --> VIEW
 ```
 
-### 컨트롤러 상태 머신
+### 동작 흐름
 
-```mermaid
-stateDiagram-v2
-    [*] --> IDLE
-    IDLE --> WAIT_DOCK_STATUS: START
-    WAIT_DOCK_STATUS --> UNDOCKING: 도크 위
-    WAIT_DOCK_STATUS --> LOCALIZING: 도크 밖
-    UNDOCKING --> LOCALIZING: Undock 성공
-    LOCALIZING --> NAV_SEARCH: AMCL 위치 확인
-    NAV_SEARCH --> SCAN: 탐색 지점 A 도착
-    SCAN --> SCAN: 한 바퀴 돌아도 없음
-    SCAN --> APPROACH: car 감지
-    NAV_SEARCH --> APPROACH: car 감지 (detect_on_way)
-    APPROACH --> HOLD: 0.8 m 앞 도착
-    APPROACH --> APPROACH: 차가 0.45 m 이상 이동 (재계획)
-    APPROACH --> SCAN: 차를 놓침
-    HOLD --> SCAN: 화면에서 사라짐 (나간 쪽으로 회전)
-    HOLD --> APPROACH: 차가 움직임 (follow)
-    SCAN --> SEARCH: 다른 곳에서 한 바퀴 실패
-    SEARCH --> NAV_SEARCH
-    HOLD --> NAV_SEARCH: START (다시 탐색)
-    STOPPED: STOPPED (어느 상태에서든 STOP)
-    UNDOCKING --> FAULT: 타임아웃
-    LOCALIZING --> FAULT: 타임아웃
-    STOPPED --> IDLE: RESET
-    FAULT --> IDLE: RESET
-```
+웹캠 START부터 Undock, 탐색, 접근, 추적까지 컨트롤러의 전체 흐름입니다.
 
-전체 구성도와 흐름도 원본은 [`docs/AMR.drawio`](docs/AMR.drawio), [`docs/AMR_flowchart.drawio`](docs/AMR_flowchart.drawio)입니다([draw.io](https://app.diagrams.net)에서 열기).
+<p align="center">
+  <a href="docs/images/amr_flow.png"><img src="docs/images/amr_flow.png" alt="AMR 동작 흐름도 (AMR.drawio)" width="100%"></a>
+</p>
+
+<details>
+<summary>컨트롤러 상태 이름으로 보기 (<code>amr/status</code>에 표시되는 값)</summary>
+
+| 상태 | 의미 |
+|---|---|
+| `IDLE` | START 대기 |
+| `WAIT_DOCK_STATUS` | 도크 위인지 확인 중 |
+| `UNDOCKING` | Undock 액션 실행 중 |
+| `LOCALIZING` | AMCL 위치와 map TF 확인 중 |
+| `NAV_SEARCH` / `SEARCH` | 탐색 지점 A로 이동 중 |
+| `SCAN` | 제자리 회전 탐색 |
+| `APPROACH` | 차량 0.8 m 앞으로 접근 중 (차가 움직이면 재계획) |
+| `HOLD` | 정지 후 차를 화면 중앙에 유지 |
+| `STOPPED` / `FAULT` | STOP 수신 / 오류. `RESET`으로 `IDLE` 복귀 |
+
+</details>
+
+원본: [`docs/AMR.drawio`](docs/AMR.drawio). 노드·토픽까지 적힌 단계별 상세 흐름도(전체 시나리오, 검출 파이프라인, 접근·추적, 지도 안전 검사, 노드·토픽 명세)는 [`docs/AMR_flowchart.drawio`](docs/AMR_flowchart.drawio)에 있습니다([draw.io](https://app.diagrams.net)에서 열기).
 
 ---
 
