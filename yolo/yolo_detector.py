@@ -1,3 +1,4 @@
+import os
 import cv2
 import time
 import rclpy
@@ -15,7 +16,9 @@ from ultralytics import YOLO
 # 설정
 # =================================
 
-MODEL_PATH = "/home/mu-03/Downloads/best.pt"
+# 기본값은 저장소 안의 yolo/models/best.pt. 다른 모델은 YOLO_MODEL 환경 변수로 지정
+MODEL_PATH = os.environ.get(
+    'YOLO_MODEL', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'best.pt'))
 
 RGB_TOPIC = '/robot3/oakd/rgb/image_raw/compressed'
 DEPTH_TOPIC = '/robot3/oakd/stereo/image_raw'
@@ -27,6 +30,9 @@ CONF = 0.25
 # 박스 중앙 몇 %에서 거리를 샘플링할지.
 # 중심 몇 픽셀만 보면 차체 틈으로 배경이 잡힌다.
 CENTER_FRACTION = 0.4
+
+# 이보다 오래된 depth 프레임은 거리 계산에 쓰지 않는다(초)
+DEPTH_MAX_AGE = 1.0
 
 VALID_RANGE_M = (0.15, 10.0)   # 이 범위 밖은 거리로 인정하지 않는다
 
@@ -240,7 +246,9 @@ class YOLODetector(Node):
 
         annotated_frame = frame.copy()
 
-        have_depth = self.depth_image is not None
+        # depth 가 끊긴 뒤 남은 옛 프레임으로 거리를 재지 않도록 나이도 본다
+        have_depth = (self.depth_image is not None
+                      and time.time() - self.last_depth_t < DEPTH_MAX_AGE)
 
         # Detection 결과 반복
         for box in results[0].boxes:
@@ -333,8 +341,9 @@ class YOLODetector(Node):
                f"rgb {rgb_age:4.1f}s  depth "
                + (f"{dep_age:4.1f}s" if self.last_depth_t else "--"))
 
-        # 데이터가 끊기면 빨갛게
-        col = (255, 255, 255) if max(rgb_age, dep_age) < 1.0 else (0, 0, 255)
+        # 데이터가 끊기면 빨갛게 (depth 를 한 번도 못 받은 RGB 단독 모드는 정상으로 본다)
+        stale = rgb_age >= 1.0 or (self.last_depth_t and dep_age >= 1.0)
+        col = (0, 0, 255) if stale else (255, 255, 255)
 
         cv2.putText(img, hud, (8, 22),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, col, 2, cv2.LINE_AA)
@@ -352,6 +361,13 @@ class YOLODetector(Node):
 
         if vis is None:
             return
+
+        # RGB 가 끊기면 detect() 가 안 돌아 HUD 가 멈추므로, 멈춘 화면 위에 경고를 덧그린다
+        rgb_age = time.time() - self.last_rgb_t if self.last_rgb_t else 0.0
+        if img is None and rgb_age >= 1.0:
+            vis = vis.copy()
+            cv2.putText(vis, f"RGB STALE {rgb_age:.1f}s", (8, 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2, cv2.LINE_AA)
 
         cv2.imshow("TurtleBot4 YOLO + Depth Detection", vis)
 

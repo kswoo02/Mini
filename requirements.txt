@@ -1,0 +1,3 @@
+# pip 로 설치 (ROS 2 Jazzy 의 rclpy, cv_bridge 등은 apt 로 설치)
+ultralytics
+lap
