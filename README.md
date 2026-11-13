@@ -105,7 +105,10 @@ flowchart LR
 .
 ├── amr_ab_control/               ROS 2 패키지 (메인)
 │   ├── amr_ab_control/
-│   │   ├── amr_ab_controller.py        메인 컨트롤러 (상태 머신, YOLO, 접근, 추적)
+│   │   ├── amr_ab_controller.py        메인 노드: 파라미터, 이벤트, 상태 머신(tick)
+│   │   ├── docking.py                  도크 상태, Undock, 초기 위치·AMCL 확인
+│   │   ├── navigation.py               Nav2 이동·취소, 탐색 지점 이동, 제자리 회전, 접근
+│   │   ├── perception.py               RGB/depth 동기화, YOLO 감지·추적, 감지 화면
 │   │   ├── amr_ab_controller_patrol.py 이전 버전: A/B 순찰
 │   │   ├── approach_core.py            접근 목표 계산, 지도 안전 검사 (ROS 비의존)
 │   │   ├── webcam_event.py             웹캠 car 감지 → START 이벤트

@@ -10,6 +10,9 @@
 amr_ab_control/
 ├── amr_ab_control/
 │   ├── amr_ab_controller.py   메인 컨트롤러 (START → 차 위치 근처 탐색 → 감지 → 접근 → follow)
+│   ├── docking.py             └ 도크 상태, Undock, 초기 위치·AMCL 확인
+│   ├── navigation.py          └ Nav2 이동·취소, 탐색 지점 이동, 제자리 회전, 접근
+│   ├── perception.py          └ RGB/depth 동기화, YOLO 감지·추적, 감지 화면
 │   ├── amr_ab_controller_patrol.py  백업: A/B 순찰 버전
 │   ├── approach_core.py       A/B 좌표, 접근 목표 계산, 지도 안전 검사 (ROS 비의존)
 │   ├── ab_nav_only.py         A → B 이동만 따로 시험 (기본은 프리뷰)
