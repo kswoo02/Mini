@@ -1,3 +1,4 @@
+import os
 import cv2
 import rclpy
 import numpy as np
@@ -20,7 +21,8 @@ class YOLODetector(Node):
         # 1. YOLO 모델 로드
         # =================================
 
-        MODEL_PATH = "/home/mu-03/Downloads/best.pt"
+        MODEL_PATH = os.environ.get(
+            'YOLO_MODEL', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'best.pt'))
 
         self.model = YOLO(MODEL_PATH)
 
@@ -317,115 +319,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-# import cv2
-# import rclpy
-# import numpy as np
-
-# from rclpy.node import Node
-# from rclpy.qos import qos_profile_sensor_data
-
-# from sensor_msgs.msg import CompressedImage, Image
-# from cv_bridge import CvBridge
-
-# from ultralytics import YOLO
-
-
-# class YOLODetector(Node):
-
-#     def __init__(self):
-
-#         super().__init__('yolo_detector')
-
-#         # YOLO model
-#         MODEL_PATH = "/home/mu-03/Downloads/best.pt"
-#         self.model = YOLO(MODEL_PATH)
-
-#         self.get_logger().info(f"YOLO Model Loaded: {MODEL_PATH}")
-#         self.get_logger().info(f"Classes: {self.model.names}")
-
-#         # OpenCV bridge
-#         self.bridge = CvBridge()
-
-#         self.frame = None
-
-#         # Camera topic
-#         self.subscription = self.create_subscription(
-#             CompressedImage,
-#             '/robot3/oakd/rgb/image_raw/compressed',
-#             self.image_callback,
-#             qos_profile_sensor_data
-#         )
-
-#         self.get_logger().info("YOLO Detector Started")
-
-#     def image_callback(self, msg):
-
-#         try:
-#             np_arr = np.frombuffer(msg.data, np.uint8)
-
-#             self.frame = cv2.imdecode(
-#                 np_arr,
-#                 cv2.IMREAD_COLOR
-#             )
-
-#             if self.frame is None:
-#                 self.get_logger().warning("Image decode failed")
-
-#         except Exception as e:
-#             self.get_logger().error(f"Image conversion error: {e}")
-
-#     def detect(self):
-
-#         if self.frame is None:
-#             return
-
-#         # YOLO detection
-#         results = self.model.predict(
-#             self.frame,
-#             imgsz=640,
-#             conf=0.25,
-#             device='cpu',
-#             verbose=False
-#         )
-
-#         # Draw bounding boxes
-#         annotated_frame = results[0].plot()
-
-#         # Display
-#         cv2.imshow("TurtleBot4 YOLO Detection", annotated_frame)
-
-#         key = cv2.waitKey(1) & 0xFF
-
-#         if key == ord('q'):
-#             raise KeyboardInterrupt
-
-
-# def main():
-
-#     rclpy.init()
-
-#     node = YOLODetector()
-
-#     try:
-
-#         while rclpy.ok():
-
-#             rclpy.spin_once(node, timeout_sec=0.01)
-
-#             node.detect()
-
-#     except KeyboardInterrupt:
-#         print("YOLO Detection Stopped")
-
-#     finally:
-
-#         node.destroy_node()
-
-#         rclpy.shutdown()
-
-#         cv2.destroyAllWindows()
-
-
-# if __name__ == '__main__':
-#     main()

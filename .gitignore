@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# ROS 2 colcon 빌드 산출물
+build/
+install/
+log/
+
+# amr_ab_control/ 로 이미 풀어 둔 패키지 압축본 (중복)
+archive/miniproject.zip
+archive/amr_ab_control_pkg_*.zip
